@@ -1,0 +1,34 @@
+ORA-31634:
+I was running data pump full export and gotten an error: 
+
+ORA-31634: job already exists
+ORA-31664: unable to construct unique job name when defaulted
+
+I cheked the table dba_datapump_jobs and it has 99 jobs in there, so that's why my export is failing. I need to cleanup orphaned datapump jobs as per document: How To Cleanup Orphaned DataPump Jobs In DBA_DATAPUMP_JOBS ? (Doc ID 336014.1)
+
+In my case all the jobs shown as NOT RUNNING and my query
+
+SQL> SELECT o.status, o.object_id, o.object_type,
+       o.owner||'.'||object_name "OWNER.OBJECT"
+  FROM dba_objects o, dba_datapump_jobs j
+ WHERE o.owner=j.owner_name AND o.object_name=j.job_name
+   AND j.job_name NOT LIKE 'BIN$%' ORDER BY 4,2;  
+
+returns something like this:
+
+STATUS   OBJECT_ID OBJECT_TYPE         OWNER.OBJECT
+------- ---------- ------------------- ---------------------------------------------------------------------------------------------------------------------------------------------------------------
+VALID       252275 TABLE               SYS.SYS_EXPORT_FULL_01
+VALID       252297 TABLE               SYS.SYS_EXPORT_FULL_02
+VALID       252319 TABLE               SYS.SYS_EXPORT_FULL_03
+VALID       252439 TABLE               SYS.SYS_EXPORT_FULL_04
+VALID       252557 TABLE               SYS.SYS_EXPORT_FULL_05
+VALID       252675 TABLE               SYS.SYS_EXPORT_FULL_06
+
+SO I wanted to drop 
+
+
+DROP TABLE SYS.SYS_EXPORT_FULL_01;
+
+and then puge it from dba_recyclebin
+
